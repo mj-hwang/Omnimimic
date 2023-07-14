@@ -1,0 +1,2 @@
+# Omnimimic
+OmniGibson + robomimic
