@@ -42,8 +42,9 @@ def process_observation(env, obs, obs_modalities):
 
 #     return step_data
 
-def process_traj_to_hdf5(traj_data, hdf5_file, traj_count):
-    traj_grp = hdf5_file.create_group(f"demo_{traj_count}")
+def process_traj_to_hdf5(traj_data, hdf5_file, traj_count, skill_type):
+    data_grp = hdf5_file["group"]
+    traj_grp = data_grp.create_group(f"demo_{traj_count}")
     traj_grp.attrs["num_samples"] = len(traj_data)
     
     obss = defaultdict([])
@@ -70,3 +71,7 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_count):
     traj_grp.create_dataset("action", data=actions)
     traj_grp.create_dataset("rewards", data=rewards)
     traj_grp.create_dataset("dones", data=dones)
+    
+    # TODO: add a mask for skill type
+    # if skill_type is not None:
+    #     hdf5_file["mask"]

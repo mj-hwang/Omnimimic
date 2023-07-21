@@ -4,7 +4,9 @@ from utils.env_util import *
 import json
 import h5py
 
-class OmniRobomimicWrapper(EnvironmentWrapper):
+h5py.get_config().track_order = True
+
+class OmnimimicBaseWrapper(EnvironmentWrapper):
     """
     An OmniGibson environment wrapper for collecting data in robomimic format. 
 
@@ -20,9 +22,10 @@ class OmniRobomimicWrapper(EnvironmentWrapper):
         self.step_count = 0
         
         self.curr_obs = None
-        self.current_traj_data = []
+        self.current_traj_histories = []
         self.hdf5_file = h5py.File(path, 'w')
-        self.data_grp = self.hdf5_file.create_group(f"data")
+        self.hdf5_file.create_group(f"data")
+        self.hdf5_file.create_group(f"mask")
         
         # TODO: update env kwargs
         self.env_args = {
@@ -30,14 +33,15 @@ class OmniRobomimicWrapper(EnvironmentWrapper):
             "env_type": EnvType.GYM_TYPE,
             "env_kwargs": {},
         }
-        self.data_grp.attrs["env_args"] = json.dumps(self.env_args)
+        self.hdf5_file["group"].attrs["env_args"] = json.dumps(self.env_args)
 
         # Run super
         super().__init__(env=env)
+        self.reset()
 
     def step(self, action):
         """
-        By default, run the normal environment step() function
+        Run the environment step() function and collect data
 
         Args:
             action (np.array): action to take in environment
@@ -59,7 +63,7 @@ class OmniRobomimicWrapper(EnvironmentWrapper):
         step_data["reward"] = reward
         step_data["next_obs"] = process_observation(next_obs)
         step_data["done"] = done
-        self.current_traj_data.append(step_data)
+        self.current_traj_histories.append(step_data)
 
         self.curr_obs = next_obs
 
@@ -67,13 +71,13 @@ class OmniRobomimicWrapper(EnvironmentWrapper):
 
     def reset(self):
         """
-        By default, run the normal environment reset() function
+        Run the environment reset() function and flush data
 
         Returns:
             dict: Environment observation space after reset occurs
         """
         if len(self.current_traj_histories) > 0:
-            self.flush_data()
+            self.flush_current_traj()
             self.current_traj_histories = []
             self.traj_count += 1
 
@@ -82,7 +86,7 @@ class OmniRobomimicWrapper(EnvironmentWrapper):
 
     def observation_spec(self):
         """
-        By default, grabs the normal environment observation_spec
+        Grab the normal environment observation_spec
 
         Returns:
             dict: Observations from the environment
@@ -93,7 +97,7 @@ class OmniRobomimicWrapper(EnvironmentWrapper):
         """
         Flush current trajectory data
         """
-        process_traj_to_hdf5(self.current_traj_histories, self.data_grp)
+        process_traj_to_hdf5(self.current_traj_histories, self.hdf5_file)
 
     def save_data(self):
         """
@@ -102,5 +106,5 @@ class OmniRobomimicWrapper(EnvironmentWrapper):
         Args:
             path (str): path to store robomimic hdf5 data file
         """
-        self.data_grp.attrs["total"] = self.step_count
+        self.hdf5_file["group"].attrs["total"] = self.step_count
         self.hdf5_file.close()
