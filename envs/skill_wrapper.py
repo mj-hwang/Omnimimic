@@ -14,7 +14,6 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
     Args:
         env (OmniGibsonEnv): The environment to wrap.
     """
-
     def __init__(self, env, obs_modalities, path):
         self.env = env
         self.obs_modalities = obs_modalities

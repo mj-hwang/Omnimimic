@@ -13,7 +13,6 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
     Args:
         env (OmniGibsonEnv): The environment to wrap.
     """
-
     def __init__(self, env, obs_modalities, path):
         self.env = env
         self.obs_modalities = obs_modalities
@@ -27,13 +26,13 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         self.hdf5_file.create_group(f"data")
         self.hdf5_file.create_group(f"mask")
         
-        # TODO: update env kwargs
+        # TODO: update env name and kwargs
         self.env_args = {
-            "env_name": self.env.name,
+            "env_name": "omni_test",
             "env_type": EnvType.GYM_TYPE,
             "env_kwargs": {},
         }
-        self.hdf5_file["group"].attrs["env_args"] = json.dumps(self.env_args)
+        self.hdf5_file["data"].attrs["env_args"] = json.dumps(self.env_args)
 
         # Run super
         super().__init__(env=env)
@@ -53,7 +52,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
                 - (bool) whether the current episode is completed or not
                 - (dict) misc information
         """
-        obs_data = process_observation(self.curr_obs)
+        obs_data = process_observation(self.env, self.curr_obs, self.obs_modalities)
         next_obs, reward, done, info = self.env.step(action)
         self.step_count += 1
 
@@ -61,7 +60,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         step_data["obs"] = obs_data
         step_data["action"] = action
         step_data["reward"] = reward
-        step_data["next_obs"] = process_observation(next_obs)
+        step_data["next_obs"] = process_observation(self.env, next_obs, self.obs_modalities)
         step_data["done"] = done
         self.current_traj_histories.append(step_data)
 
@@ -106,5 +105,5 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         Args:
             path (str): path to store robomimic hdf5 data file
         """
-        self.hdf5_file["group"].attrs["total"] = self.step_count
+        self.hdf5_file["data"].attrs["total"] = self.step_count
         self.hdf5_file.close()

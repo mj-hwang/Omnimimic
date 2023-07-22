@@ -1,4 +1,5 @@
 from collections import defaultdict
+import numpy as np
 
 def process_observation(env, obs, obs_modalities):
     proprioception_dict = env.robots[0]._get_proprioception_dict()
@@ -6,19 +7,19 @@ def process_observation(env, obs, obs_modalities):
     step_obs_data = {}
     for mod in obs_modalities:
         if mod == "lidar":
-            mod_data = obs["robot0:laser_link_Lidar_sensor_scan"]
+            mod_data = obs["robot0"]["robot0:laser_link_Lidar_sensor_scan"]
         elif mod == "rgb":
-            mod_data = obs["robot0:eyes_Camera_sensor_rgb"]
+            mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_rgb"]
         elif mod == "depth":
-            mod_data = obs["robot0:eyes_Camera_sensor_depth"]
-        elif mod == "joint_qpos":
-            mod_data = proprioception_dict["joint_qpos"]
-        elif mod == "joint_qvel":
-            mod_data = proprioception_dict["joint_qvel"]
-        elif mod == "eef_pose_in_robot":
-            mod_data = env.robots[0].get_relative_eef_pose()
-        elif mod == "base_pose_in_world":
-            mod_data = env.robots[0].get_position_orientation()
+            mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_depth"]
+        elif mod == "robot_pos":
+            mod_data = env.robots[0].get_position()
+        elif mod == "robot_quat":
+            mod_data = env.robots[0].get_rpy()
+        elif mod in proprioception_dict:
+            mod_data = proprioception_dict[mod]
+        else:
+            raise KeyError(f"{mod} is an invalid or unsupported modality for this robot.")
         step_obs_data[mod] = mod_data
     return step_obs_data
 
@@ -43,7 +44,7 @@ def process_observation(env, obs, obs_modalities):
 #     return step_data
 
 def process_traj_to_hdf5(traj_data, hdf5_file, traj_count, skill_type):
-    data_grp = hdf5_file["group"]
+    data_grp = hdf5_file["data"]
     traj_grp = data_grp.create_group(f"demo_{traj_count}")
     traj_grp.attrs["num_samples"] = len(traj_data)
     
@@ -64,13 +65,13 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_count, skill_type):
 
     obs_grp = traj_grp.create_group("obs")
     for mod, traj_mod_data in obss.items():
-        obs_grp.create_dataset(mod, data=traj_mod_data)
+        obs_grp.create_dataset(mod, data=np.array(traj_mod_data))
     next_obs_grp = traj_grp.create_group("obs")
     for mod, traj_mod_data in next_obss.items():
-        next_obs_grp.create_dataset(mod, data=traj_mod_data)
-    traj_grp.create_dataset("action", data=actions)
-    traj_grp.create_dataset("rewards", data=rewards)
-    traj_grp.create_dataset("dones", data=dones)
+        next_obs_grp.create_dataset(mod, data=np.array(traj_mod_data))
+    traj_grp.create_dataset("action", data=np.array(actions))
+    traj_grp.create_dataset("rewards", data=np.array(rewards))
+    traj_grp.create_dataset("dones", data=np.array(dones))
     
     # TODO: add a mask for skill type
     # if skill_type is not None:
