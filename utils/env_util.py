@@ -1,5 +1,6 @@
 from collections import defaultdict
 import numpy as np
+import json
 
 def process_observation(env, obs, obs_modalities):
     proprioception_dict = env.robots[0]._get_proprioception_dict()
@@ -43,13 +44,13 @@ def process_observation(env, obs, obs_modalities):
 
 #     return step_data
 
-def process_traj_to_hdf5(traj_data, hdf5_file, traj_count, skill_type):
+def process_traj_to_hdf5(traj_data, hdf5_file, traj_count, skill_type=None):
     data_grp = hdf5_file["data"]
     traj_grp = data_grp.create_group(f"demo_{traj_count}")
     traj_grp.attrs["num_samples"] = len(traj_data)
     
-    obss = defaultdict([])
-    next_obss = defaultdict([])
+    obss = defaultdict(list)
+    next_obss = defaultdict(list)
     actions = []
     rewards = []
     dones = []
@@ -66,10 +67,10 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_count, skill_type):
     obs_grp = traj_grp.create_group("obs")
     for mod, traj_mod_data in obss.items():
         obs_grp.create_dataset(mod, data=np.array(traj_mod_data))
-    next_obs_grp = traj_grp.create_group("obs")
+    next_obs_grp = traj_grp.create_group("next_obs")
     for mod, traj_mod_data in next_obss.items():
         next_obs_grp.create_dataset(mod, data=np.array(traj_mod_data))
-    traj_grp.create_dataset("action", data=np.array(actions))
+    traj_grp.create_dataset("actions", data=np.array(actions))
     traj_grp.create_dataset("rewards", data=np.array(rewards))
     traj_grp.create_dataset("dones", data=np.array(dones))
     

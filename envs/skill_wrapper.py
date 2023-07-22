@@ -24,8 +24,8 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         self.curr_obs = None
         self.current_traj_histories = []
         self.hdf5_file = h5py.File(path, 'w')
-        self.hdf5_file.create_group(f"data")
-        self.hdf5_file.create_group(f"mask")
+        self.hdf5_file.create_group("data")
+        self.hdf5_file.create_group("mask")
         
         # TODO: update env kwargs
         self.env_args = {

@@ -23,8 +23,8 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         self.curr_obs = None
         self.current_traj_histories = []
         self.hdf5_file = h5py.File(path, 'w')
-        self.hdf5_file.create_group(f"data")
-        self.hdf5_file.create_group(f"mask")
+        self.hdf5_file.create_group("data")
+        self.hdf5_file.create_group("mask")
         
         # TODO: update env name and kwargs
         self.env_args = {
@@ -96,7 +96,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         """
         Flush current trajectory data
         """
-        process_traj_to_hdf5(self.current_traj_histories, self.hdf5_file)
+        process_traj_to_hdf5(self.current_traj_histories, self.hdf5_file, self.traj_count)
 
     def save_data(self):
         """
