@@ -45,7 +45,7 @@ def process_observation(env, obs, obs_modalities):
 #     return step_data
 
 def get_skill_type(env, action, skill_type):
-    base_action = action[env.robots[0].robot.controller_action_idx["base"]]
+    base_action = action[env.robots[0].controller_action_idx["base"]]
     if max(base_action) < 1e-8:
         return skill_type + "_nav"
     else:

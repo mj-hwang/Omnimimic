@@ -35,7 +35,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         
         # TODO: update env kwargs
         self.env_args = {
-            "env_name": self.env.name,
+            "env_name": "omni_test",
             "env_type": EnvType.GYM_TYPE,
             "env_kwargs": {},
         }
@@ -49,10 +49,10 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         """
         Execute the skill given the skill controller, and flush data
         """
-        current_obs_processed = process_observation(self.current_obs)
+        current_obs_processed = process_observation(self.env, self.current_obs, self.obs_modalities)
 
         for action in skill_controller:
-            skill_type = get_skill_type(self.env, action, skill_type)
+            skill_type = get_skill_type(self.env, action, skill_name)
 
             if skill_type != self.current_skill_type:
                 if self.current_skill_type is not None and len(self.current_traj_histories) > 0:
