@@ -20,7 +20,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         self.traj_count = 0
         self.step_count = 0
         
-        self.curr_obs = None
+        self.current_ibs = None
         self.current_traj_histories = []
         self.hdf5_file = h5py.File(path, 'w')
         self.hdf5_file.create_group("data")
@@ -52,7 +52,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
                 - (bool) whether the current episode is completed or not
                 - (dict) misc information
         """
-        obs_data = process_observation(self.env, self.curr_obs, self.obs_modalities)
+        obs_data = process_observation(self.env, self.current_obs, self.obs_modalities)
         next_obs, reward, done, info = self.env.step(action)
         self.step_count += 1
 
@@ -64,7 +64,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         step_data["done"] = done
         self.current_traj_histories.append(step_data)
 
-        self.curr_obs = next_obs
+        self.current_obs = next_obs
 
         return next_obs, reward, done, info
 
@@ -77,11 +77,9 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         """
         if len(self.current_traj_histories) > 0:
             self.flush_current_traj()
-            self.current_traj_histories = []
-            self.traj_count += 1
 
-        self.curr_obs = self.env.reset()
-        return self.curr_obs
+        self.current_obs = self.env.reset()
+        return self.current_obs
 
     def observation_spec(self):
         """
@@ -96,7 +94,10 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         """
         Flush current trajectory data
         """
-        process_traj_to_hdf5(self.current_traj_histories, self.hdf5_file, self.traj_count)
+        traj_grp_name = f"demo_{self.traj_count}"
+        process_traj_to_hdf5(self.current_traj_histories, self.hdf5_file, traj_grp_name)
+        self.current_traj_histories = []
+        self.traj_count += 1
 
     def save_data(self):
         """

@@ -44,9 +44,16 @@ def process_observation(env, obs, obs_modalities):
 
 #     return step_data
 
-def process_traj_to_hdf5(traj_data, hdf5_file, traj_count, skill_type=None):
+def get_skill_type(env, action, skill_type):
+    base_action = action[env.robots[0].robot.controller_action_idx["base"]]
+    if max(base_action) < 1e-8:
+        return skill_type + "_nav"
+    else:
+        return skill_type
+
+def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
     data_grp = hdf5_file["data"]
-    traj_grp = data_grp.create_group(f"demo_{traj_count}")
+    traj_grp = data_grp.create_group(traj_grp_name)
     traj_grp.attrs["num_samples"] = len(traj_data)
     
     obss = defaultdict(list)
@@ -73,7 +80,3 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_count, skill_type=None):
     traj_grp.create_dataset("actions", data=np.array(actions))
     traj_grp.create_dataset("rewards", data=np.array(rewards))
     traj_grp.create_dataset("dones", data=np.array(dones))
-    
-    # TODO: add a mask for skill type
-    # if skill_type is not None:
-    #     hdf5_file["mask"]
