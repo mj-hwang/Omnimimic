@@ -15,15 +15,6 @@ from omnigibson.objects.dataset_object import DatasetObject
 
 from robomimic.utils.dataset import SequenceDataset
 
-def pause(time):
-    for _ in range(int(time*100)):
-        og.sim.step()
-
-def replay_controller(env, filename):
-    actions = yaml.load(open(filename, "r"), Loader=yaml.FullLoader)
-    for action in actions:
-        env.step(action)
-
 def execute_controller(ctrl_gen, env, filename=None):
     actions = []
     for action in ctrl_gen:

@@ -39,7 +39,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
             "env_type": EnvType.GYM_TYPE,
             "env_kwargs": {},
         }
-        self.hdf5_file["group"].attrs["env_args"] = json.dumps(self.env_args)
+        self.hdf5_file["data"].attrs["env_args"] = json.dumps(self.env_args)
 
         # Run super
         super().__init__(env=env)
@@ -150,7 +150,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         Args:
             path (str): path to store robomimic hdf5 data file
         """
-        self.hdf5_file["group"].attrs["total"] = self.step_count
+        self.hdf5_file["data"].attrs["total"] = self.step_count
 
         for skill_type, grps in self.skill_mask_dict.items():
             self.hdf5_file["mask"].create_dataset(skill_type, data=grps)
