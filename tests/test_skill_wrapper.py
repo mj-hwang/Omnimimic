@@ -25,7 +25,7 @@ def collect(data_path):
     env = og.Environment(configs=config)
     env_wrapped = OmnimimicSkillWrapper(
         env, 
-        ["scan", "rgb", "depth", "proprio""], 
+        ["scan", "rgb", "depth", "proprio"], 
         f"data/{data_path}",
     )
     scene = env.scene
