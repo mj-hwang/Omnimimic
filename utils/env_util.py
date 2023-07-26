@@ -4,23 +4,18 @@ import json
 
 
 
-def process_observation(env, obs, obs_modalities):
-    proprioception_dict = env.robots[0]._get_proprioception_dict()
-
+def process_observation(obs, obs_modalities):
     step_obs_data = {}
     for mod in obs_modalities:
         if mod == "lidar":
             mod_data = obs["robot0"]["robot0:laser_link_Lidar_sensor_scan"]
         elif mod == "rgb":
             mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_rgb"]
+            mod_data = np.moveaxis(mod_data, -1, 0)[:3, :, :]
         elif mod == "depth":
             mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_depth"]
-        elif mod == "robot_pos":
-            mod_data = env.robots[0].get_position()
-        elif mod == "robot_quat":
-            mod_data = env.robots[0].get_rpy()
-        elif mod in proprioception_dict:
-            mod_data = proprioception_dict[mod]
+        elif mod == "proprio":
+            mod_data = obs["robot0"]["proprio"]
         else:
             raise KeyError(f"{mod} is an invalid or unsupported modality for this robot.")
         step_obs_data[mod] = mod_data

@@ -52,7 +52,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
                 - (bool) whether the current episode is completed or not
                 - (dict) misc information
         """
-        obs_data = process_observation(self.env, self.current_obs, self.obs_modalities)
+        obs_data = process_observation(self.current_obs, self.obs_modalities)
         next_obs, reward, done, info = self.env.step(action)
         self.step_count += 1
 
@@ -60,7 +60,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         step_data["obs"] = obs_data
         step_data["action"] = action
         step_data["reward"] = reward
-        step_data["next_obs"] = process_observation(self.env, next_obs, self.obs_modalities)
+        step_data["next_obs"] = process_observation(next_obs, self.obs_modalities)
         step_data["done"] = done
         self.current_traj_histories.append(step_data)
 
