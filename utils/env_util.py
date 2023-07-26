@@ -2,6 +2,8 @@ from collections import defaultdict
 import numpy as np
 import json
 
+
+
 def process_observation(env, obs, obs_modalities):
     proprioception_dict = env.robots[0]._get_proprioception_dict()
 
@@ -46,10 +48,20 @@ def process_observation(env, obs, obs_modalities):
 
 def get_skill_type(env, action, skill_type):
     base_action = action[env.robots[0].controller_action_idx["base"]]
-    if max(base_action) < 1e-8:
-        return skill_type + "_nav"
-    else:
+    print("base action", base_action)
+    if max(abs(base_action)) < 1e-8:
         return skill_type
+    else:
+        return skill_type + "_nav"
+
+# def get_skill_type(env, action, skill_type):
+#     robot_vel = np.concatenate([env.robots[0].get_linear_velocity(), env.robots[0].get_angular_velocity()])
+#     print("robot vel", robot_vel)
+#     # base_action = action[env.robots[0].controller_action_idx["base"]]
+#     if max(np.abs(robot_vel)) < 1e-3:
+#         return skill_type
+#     else:
+#         return skill_type + "_nav"
 
 def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
     data_grp = hdf5_file["data"]

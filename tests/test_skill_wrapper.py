@@ -6,16 +6,15 @@ import os
 import sys
 sys.path.append("../")
 from envs.skill_wrapper import OmnimimicSkillWrapper
-
-import omnigibson as og
-from omnigibson.macros import gm
-from omnigibson.action_primitives.starter_semantic_action_primitives import StarterSemanticActionPrimitives
-import omnigibson.utils.transform_utils as T
-from omnigibson.objects.dataset_object import DatasetObject
-
 from robomimic.utils.dataset import SequenceDataset
 
 def collect(data_path):
+    import omnigibson as og
+    from omnigibson.macros import gm
+    from omnigibson.action_primitives.starter_semantic_action_primitives import StarterSemanticActionPrimitives
+    import omnigibson.utils.transform_utils as T
+    from omnigibson.objects.dataset_object import DatasetObject
+
     # Load the config
     config_filename = "test.yaml"
     config = yaml.load(open(config_filename, "r"), Loader=yaml.FullLoader)

@@ -21,6 +21,9 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
 
         self.traj_count = 0
         self.step_count = 0
+
+        self.manipulation_traj_count = 0
+        self.navigation_traj_count = 0
         
         self.current_obs = None
         self.current_skill_type = None
@@ -48,36 +51,78 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
     def execute_skill(self, skill_controller, skill_name):
         """
         Execute the skill given the skill controller, and flush data
+        Data is flushed every time skill type changes.
+        If planning or execution fails, trajectory is discarded.
         """
         current_obs_processed = process_observation(self.env, self.current_obs, self.obs_modalities)
 
-        for action in skill_controller:
-            skill_type = get_skill_type(self.env, action, skill_name)
+        try:
+            for action in skill_controller:
+                skill_type = get_skill_type(self.env, action, skill_name)
+                print("skill type", skill_type)
+                if skill_type != self.current_skill_type:
+                    if self.current_skill_type is not None and len(self.current_traj_histories) > 0:
+                        # self.flush_current_traj(skill_type)
+                        self.flush_current_traj()
+                    self.current_skill_type = skill_type
 
-            if skill_type != self.current_skill_type:
-                if self.current_skill_type is not None and len(self.current_traj_histories) > 0:
-                    self.flush_current_traj(skill_type)
-                self.current_skill_type = skill_type
+                next_obs, reward, done, info = self.env.step(action)
+                self.step_count += 1
 
-            next_obs, reward, done, info = self.env.step(action)
-            self.step_count += 1
+                step_data = {}
+                step_data["obs"] = current_obs_processed
+                step_data["action"] = action
+                step_data["reward"] = reward
+                step_data["done"] = done
 
-            step_data = {}
-            step_data["obs"] = current_obs_processed
-            step_data["action"] = action
-            step_data["reward"] = reward
-            step_data["done"] = done
+                next_obs_processed = process_observation(self.env, next_obs, self.obs_modalities)
+                step_data["next_obs"] = next_obs_processed
 
-            next_obs_processed = process_observation(self.env, next_obs, self.obs_modalities)
-            step_data["next_obs"] = next_obs_processed
+                self.current_traj_histories.append(step_data)
 
-            self.current_traj_histories.append(step_data)
+                self.current_obs = next_obs
+                current_obs_processed = next_obs_processed
 
-            self.current_obs = next_obs
-            current_obs_processed = next_obs_processed
+            if len(self.current_traj_histories) > 0:
+                self.flush_current_traj()
+        
+        except:
+            pass
 
-        if len(self.current_traj_histories) > 0:
-            self.flush_current_traj()
+    # def execute_skill(self, skill_controller, skill_name):
+    #     """
+    #     Execute the skill given the skill controller, and flush data
+    #     """
+    #     current_obs_processed = process_observation(self.env, self.current_obs, self.obs_modalities)
+
+    #     for action in skill_controller:
+    #         skill_type = get_skill_type(self.env, action, skill_name)
+
+    #         if skill_type != self.current_skill_type:
+    #             if self.current_skill_type is not None and len(self.current_traj_histories) > 0:
+    #                 # self.flush_current_traj(skill_type)
+    #                 self.flush_current_traj()
+    #             self.current_skill_type = skill_type
+
+    #         next_obs, reward, done, info = self.env.step(action)
+    #         self.step_count += 1
+
+    #         step_data = {}
+    #         step_data["obs"] = current_obs_processed
+    #         step_data["action"] = action
+    #         step_data["reward"] = reward
+    #         step_data["done"] = done
+
+    #         next_obs_processed = process_observation(self.env, next_obs, self.obs_modalities)
+    #         step_data["next_obs"] = next_obs_processed
+
+    #         self.current_traj_histories.append(step_data)
+
+    #         self.current_obs = next_obs
+    #         current_obs_processed = next_obs_processed
+
+    #     if len(self.current_traj_histories) > 0:
+    #         self.flush_current_traj()
 
     def step(self, action):
         """
@@ -136,13 +181,20 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         """
         Flush current trajectory data and update mask for skill type
         """
+        # print("!!!!!!!FLUSH!!!!!!!!")
         traj_grp_name = f"demo_{self.traj_count}"
         process_traj_to_hdf5(self.current_traj_histories, self.hdf5_file, traj_grp_name)
         self.current_traj_histories = []
         self.traj_count += 1
 
-        self.skill_mask_dict[self.current_skill_type].append(traj_grp_name)
+        if "nav" in self.current_skill_type:
+            self.navigation_traj_count += 1
+        else:
+            self.manipulation_traj_count += 1
 
+        print("traj counts (total), nav, manip", self.traj_count, self.navigation_traj_count, self.manipulation_traj_count)
+        self.skill_mask_dict[self.current_skill_type].append(traj_grp_name)
+        breakpoint()
     def save_data(self):
         """
         Save collected trajectories as a hdf5 file in the robomimic format
