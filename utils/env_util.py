@@ -2,44 +2,23 @@ from collections import defaultdict
 import numpy as np
 import json
 
-
-
 def process_observation(obs, obs_modalities):
     step_obs_data = {}
     for mod in obs_modalities:
-        if mod == "lidar":
+        if mod == "scan":
             mod_data = obs["robot0"]["robot0:laser_link_Lidar_sensor_scan"]
         elif mod == "rgb":
             mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_rgb"]
-            mod_data = np.moveaxis(mod_data, -1, 0)[:3, :, :]
+            mod_data = mod_data[:, :, :3]
         elif mod == "depth":
             mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_depth"]
+            mod_data = mod_data[:, :, np.newaxis]
         elif mod == "proprio":
             mod_data = obs["robot0"]["proprio"]
         else:
             raise KeyError(f"{mod} is an invalid or unsupported modality for this robot.")
         step_obs_data[mod] = mod_data
     return step_obs_data
-
-# def process_step(env, obs_data, action, next_obs, reward, done, obs_modalities):
-#     """
-#     Parse OmniGibson config file / object
-
-#     Args:
-#         config (dict or str): Either config dictionary or path to yaml config to load
-
-#     Returns:
-#         dict: Parsed config
-#     """
-#     step_data = {}
-
-#     step_data["obs"] = obs
-#     step_data["action"] = action
-#     step_data["reward"] = reward
-#     step_data["next_obs"] = process_observation(next_obs)
-#     step_data["done"] = True
-
-#     return step_data
 
 def get_skill_type(env, action, skill_type):
     base_action = action[env.robots[0].controller_action_idx["base"]]
@@ -48,15 +27,6 @@ def get_skill_type(env, action, skill_type):
         return skill_type
     else:
         return skill_type + "_nav"
-
-# def get_skill_type(env, action, skill_type):
-#     robot_vel = np.concatenate([env.robots[0].get_linear_velocity(), env.robots[0].get_angular_velocity()])
-#     print("robot vel", robot_vel)
-#     # base_action = action[env.robots[0].controller_action_idx["base"]]
-#     if max(np.abs(robot_vel)) < 1e-3:
-#         return skill_type
-#     else:
-#         return skill_type + "_nav"
 
 def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
     data_grp = hdf5_file["data"]
