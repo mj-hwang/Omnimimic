@@ -54,7 +54,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         Data is flushed every time skill type changes.
         If planning or execution fails, trajectory is discarded.
         """
-        current_obs_processed = process_observation(self.current_obs, self.obs_modalities)
+        current_obs_processed = process_omni_obs(self.current_obs, self.obs_modalities)
 
         try:
             for action in skill_controller:
@@ -75,7 +75,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                 step_data["reward"] = reward
                 step_data["done"] = done
 
-                next_obs_processed = process_observation(next_obs, self.obs_modalities)
+                next_obs_processed = process_omni_obs(next_obs, self.obs_modalities)
                 step_data["next_obs"] = next_obs_processed
 
                 self.current_traj_histories.append(step_data)
@@ -104,7 +104,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                 - (bool) whether the current episode is completed or not
                 - (dict) misc information
         """
-        obs_data = process_observation(self.current_obs)
+        obs_data = process_omni_obs(self.current_obs)
         next_obs, reward, done, info = self.env.step(action)
         self.step_count += 1
 
@@ -112,7 +112,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         step_data["obs"] = obs_data
         step_data["action"] = action
         step_data["reward"] = reward
-        step_data["next_obs"] = process_observation(next_obs)
+        step_data["next_obs"] = process_omni_obs(next_obs)
         step_data["done"] = done
         self.current_traj_histories.append(step_data)
 
@@ -146,20 +146,11 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         """
         Flush current trajectory data and update mask for skill type
         """
-        # print("!!!!!!!FLUSH!!!!!!!!")
         traj_grp_name = f"demo_{self.traj_count}"
         process_traj_to_hdf5(self.current_traj_histories, self.hdf5_file, traj_grp_name)
         self.current_traj_histories = []
         self.traj_count += 1
 
-        if "nav" in self.current_skill_type:
-            self.navigation_traj_count += 1
-        else:
-            self.manipulation_traj_count += 1
-
-        print("traj counts (total), nav, manip", self.traj_count, self.navigation_traj_count, self.manipulation_traj_count)
-        self.skill_mask_dict[self.current_skill_type].append(traj_grp_name)
-        breakpoint()
     def save_data(self):
         """
         Save collected trajectories as a hdf5 file in the robomimic format

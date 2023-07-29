@@ -1,18 +1,24 @@
 from collections import defaultdict
 import numpy as np
-import json
 
-def process_observation(obs, obs_modalities):
+from robomimic.utils.obs_utils import process_obs
+
+def process_omni_obs(obs, obs_modalities, postprocess_for_eval=False):
     step_obs_data = {}
     for mod in obs_modalities:
         if mod == "scan":
             mod_data = obs["robot0"]["robot0:laser_link_Lidar_sensor_scan"]
+            mod_data = mod_data.T
         elif mod == "rgb":
             mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_rgb"]
             mod_data = mod_data[:, :, :3]
+            if postprocess_for_eval:
+                mod_data = process_obs(mod_data, obs_modality="rgb")      
         elif mod == "depth":
             mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_depth"]
             mod_data = mod_data[:, :, np.newaxis]
+            if postprocess_for_eval:
+                mod_data = process_obs(mod_data, obs_modality="depth") 
         elif mod == "proprio":
             mod_data = obs["robot0"]["proprio"]
         else:
@@ -50,10 +56,10 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
 
     obs_grp = traj_grp.create_group("obs")
     for mod, traj_mod_data in obss.items():
-        obs_grp.create_dataset(mod, data=np.array(traj_mod_data))
+        obs_grp.create_dataset(mod, data=np.stack(traj_mod_data, axis=0))
     next_obs_grp = traj_grp.create_group("next_obs")
     for mod, traj_mod_data in next_obss.items():
-        next_obs_grp.create_dataset(mod, data=np.array(traj_mod_data))
-    traj_grp.create_dataset("actions", data=np.array(actions))
-    traj_grp.create_dataset("rewards", data=np.array(rewards))
-    traj_grp.create_dataset("dones", data=np.array(dones))
+        next_obs_grp.create_dataset(mod, data=np.stack(traj_mod_data, axis=0))
+    traj_grp.create_dataset("actions", data=np.stack(actions, axis=0))
+    traj_grp.create_dataset("rewards", data=np.stack(rewards, axis=0))
+    traj_grp.create_dataset("dones", data=np.stack(dones, axis=0))
