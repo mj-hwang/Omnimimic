@@ -1,8 +1,8 @@
 from omnigibson.envs.env_wrapper import EnvironmentWrapper
-from robomimic.envs.env_base import EnvType
-from utils.env_util import *
 import json
 import h5py
+
+from Omnimimic.utils.env_util import *
 
 h5py.get_config().track_order = True
 
@@ -12,6 +12,8 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
 
     Args:
         env (OmniGibsonEnv): The environment to wrap.
+        obs_modalities (list): list of observation modalities to collect
+        path (str): path to store robomimic hdf5 data file
     """
     def __init__(self, env, obs_modalities, path):
         self.env = env
@@ -21,7 +23,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         self.step_count = 0
         
         self.current_ibs = None
-        self.current_traj_histories = []
+        self.current_traj_history = []
         self.hdf5_file = h5py.File(path, 'w')
         self.hdf5_file.create_group("data")
         self.hdf5_file.create_group("mask")
@@ -62,7 +64,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         step_data["reward"] = reward
         step_data["next_obs"] = process_omni_obs(next_obs, self.obs_modalities)
         step_data["done"] = done
-        self.current_traj_histories.append(step_data)
+        self.current_traj_history.append(step_data)
 
         self.current_obs = next_obs
 
@@ -75,7 +77,7 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         Returns:
             dict: Environment observation space after reset occurs
         """
-        if len(self.current_traj_histories) > 0:
+        if len(self.current_traj_history) > 0:
             self.flush_current_traj()
 
         self.current_obs = self.env.reset()
@@ -95,8 +97,8 @@ class OmnimimicBaseWrapper(EnvironmentWrapper):
         Flush current trajectory data
         """
         traj_grp_name = f"demo_{self.traj_count}"
-        process_traj_to_hdf5(self.current_traj_histories, self.hdf5_file, traj_grp_name)
-        self.current_traj_histories = []
+        process_traj_to_hdf5(self.current_traj_history, self.hdf5_file, traj_grp_name)
+        self.current_traj_history = []
         self.traj_count += 1
 
     def save_data(self):

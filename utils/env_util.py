@@ -7,7 +7,13 @@ def process_omni_obs(obs, obs_modalities, postprocess_for_eval=False):
     step_obs_data = {}
     for mod in obs_modalities:
         if mod == "scan":
-            mod_data = obs["robot0"]["robot0:laser_link_Lidar_sensor_scan"]
+            if "robot0:laser_link_Lidar_sensor_scan" in obs["robot0"]:
+                mod_data = obs["robot0"]["robot0:laser_link_Lidar_sensor_scan"]
+            else:
+                mod_data = np.concatenate([
+                    obs["robot0"]["robot0:base_front_laser_link_Lidar_sensor_scan"],
+                    obs["robot0"]["robot0:base_rear_laser_link_Lidar_sensor_scan"]
+                ])
             mod_data = mod_data.T
         elif mod == "rgb":
             mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_rgb"]
@@ -28,14 +34,14 @@ def process_omni_obs(obs, obs_modalities, postprocess_for_eval=False):
 
 def get_skill_type(env, action, skill_type):
     base_action = action[env.robots[0].controller_action_idx["base"]]
-    print("base action", base_action)
+    # print("base action", base_action)
     if max(abs(base_action)) < 1e-8:
-        return skill_type
+        return skill_type + "_manip"
     else:
         return skill_type + "_nav"
 
 def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
-    data_grp = hdf5_file["data"]
+    data_grp = hdf5_file.require_group("data")
     traj_grp = data_grp.create_group(traj_grp_name)
     traj_grp.attrs["num_samples"] = len(traj_data)
     

@@ -1,6 +1,7 @@
 from robomimic.envs.env_base import EnvType
-from utils.env_util import *
 from collections import deque
+
+from Omnimimic.utils.env_util import *
 
 class OmnimimicEvalWrapper:
     def __init__(self, env, obs_modalities, num_frames=1):
@@ -65,10 +66,10 @@ class OmnimimicEvalWrapper:
 
     def is_success(self):
         """
-        Check if the task condition(s) is reached. Should return a dictionary { str: bool } 
+        Check if the task condition(s) is reached. Should return a boolean varaible
         with at least a “task” key for the overall task success, and additional optional keys corresponding to other task criteria.
         """
-        raise NotImplementedError
+        return self.env.is_success()
 
     def _stack_observation(self):
         """
