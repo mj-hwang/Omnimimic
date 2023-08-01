@@ -88,9 +88,12 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
 
             current_skill_type = None
             current_skill_history = []
-            for action in skill_generator:
-                skill_type = get_skill_type(self.env, action, skill_name)
-                # print("skill type", skill_type)
+            for action, skill_info in skill_controller:
+                skill_type = skill_info.split(":")[0]
+                if skill_type == "nav":
+                    skill_type = skill_name + "_nav"
+                else:
+                    skill_type = skill_name + "_manip"
                 if skill_type != current_skill_type:
                     if current_skill_type is not None and len(current_skill_history) > 0:
                         self.current_traj_history.append(
