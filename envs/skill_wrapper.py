@@ -62,9 +62,9 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
 
         self.data_path = path
         with h5py.File(self.data_path, 'w') as f:
-            f.create_group("data")
+            data_grp = f.create_group("data")
             f.create_group("mask")
-            f.attrs["env_args"] = json.dumps(self.env_args)
+            data_grp.attrs["env_args"] = json.dumps(self.env_args)
 
         # Run super
         super().__init__(env=env)
