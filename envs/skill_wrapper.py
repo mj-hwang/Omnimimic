@@ -88,7 +88,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
 
             current_skill_type = None
             current_skill_history = []
-            for action, skill_info in skill_controller:
+            for action, skill_info in skill_generator:
                 skill_type = skill_info.split(":")[0]
                 if skill_type == "nav":
                     skill_type = skill_name + "_nav"
@@ -126,8 +126,8 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
 
             if self.env.is_success():
                 self.ever_succeededed = True
-        except:
-            print("skill execution failed")
+        except ActionPrimitiveError as err:
+            print("skill execution failed", err)
             if not self.collect_partial:
                 self.current_traj_history = []
 
