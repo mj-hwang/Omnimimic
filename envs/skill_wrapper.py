@@ -5,6 +5,7 @@ import json
 import h5py
 
 from Omnimimic.utils.env_util import *
+from Omnimimic.utils.robot_util import *
 from omnigibson.action_primitives.action_primitive_set_base import ActionPrimitiveError
 
 h5py.get_config().track_order = True
@@ -66,6 +67,8 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
             f.create_group("mask")
             data_grp.attrs["env_args"] = json.dumps(self.env_args)
 
+        self.control_limits = get_control_limits(self.env.robot)
+
         # Run super
         super().__init__(env=env)
         self.reset()
@@ -107,7 +110,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
 
                 step_data = {}
                 step_data["obs"] = current_obs_processed
-                step_data["action"] = action
+                step_data["action"] = normalize_action(action, self.control_limits)
                 step_data["reward"] = reward
                 step_data["done"] = done
 
@@ -119,7 +122,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                 self.current_obs = next_obs
                 current_obs_processed = next_obs_processed
 
-            if len(self.current_traj_history) > 0:
+            if len(current_skill_history) > 0:
                 self.current_traj_history.append(
                     (current_skill_type, current_skill_history)
                 )
@@ -162,6 +165,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
             if self.ever_succeededed:
                 self.flush_current_traj()
         else:
+            print("flushing")
             self.flush_current_traj()
 
         self.current_obs = self.env.reset()
