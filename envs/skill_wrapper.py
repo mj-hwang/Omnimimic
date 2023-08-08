@@ -55,11 +55,12 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
 
         self.skill_mask_dict = defaultdict(list)
         # TODO: update env kwargs
-        self.env_args = {
-            "env_name": "omni_test",
-            "env_type": EnvType.GYM_TYPE,
-            "env_kwargs": {},
-        }
+        # self.env_args = {
+        #     "env_name": "omni_test",
+        #     "env_type": EnvType.GYM_TYPE,
+        #     "env_kwargs": {},
+        # }
+        self.env_args = self.env.env_args
 
         self.data_path = path
         with h5py.File(self.data_path, 'w') as f:
@@ -113,6 +114,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                 step_data["action"] = normalize_action(action, self.control_limits)
                 step_data["reward"] = reward
                 step_data["done"] = done
+                step_data[""]
 
                 next_obs_processed = process_omni_obs(next_obs, self.obs_modalities)
                 step_data["next_obs"] = next_obs_processed
