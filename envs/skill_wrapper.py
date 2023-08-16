@@ -35,6 +35,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         collect_partial=False,
         collect_if_success_at_least_once=True,
         collect_if_success_at_the_end=False,
+        use_delta=True,
     ):
         self.env = env
         self.obs_modalities = obs_modalities
@@ -68,7 +69,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
             f.create_group("mask")
             data_grp.attrs["env_args"] = json.dumps(self.env_args)
 
-        self.control_limits = get_control_limits(self.env.robot)
+        self.control_limits = get_control_limits(self.env.robot, use_delta=use_delta)
 
         # Run super
         super().__init__(env=env)

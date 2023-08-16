@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_control_limits(robot):
+def get_control_limits(robot, use_delta=False):
     """
     Get the control limits for the robot. This is used to normalize the action space.
     """
@@ -17,7 +17,11 @@ def get_control_limits(robot):
         if len(joint_idx) == len(action_idx):
             print("hi")
             control_type = cfg["motor_type"]
-            control_limits[action_idx, :] = np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, :]
+            if use_delta:
+                control_limits[action_idx, 0] = np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, 0] - np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, 1]
+                control_limits[action_idx, 1] = -control_limits[action_idx, 0]
+            else:
+                control_limits[action_idx, :] = np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, :]
         
     return control_limits
 
