@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_control_limits(robot, use_delta=False):
+def get_control_limits(robot):
     """
     Get the control limits for the robot. This is used to normalize the action space.
     """
@@ -13,9 +13,14 @@ def get_control_limits(robot, use_delta=False):
         print(name)
         print(joint_idx)
         print(action_idx)
+        # check if controller uses delta commands
+        if "use_delta_commands" in cfg.keys():
+            use_delta = cfg["use_delta_commands"]
+        else:
+            use_delta = False
 
-        if len(joint_idx) == len(action_idx):
-            print("hi")
+        if len(joint_idx) == len(action_idx): # don't do anything to gripper action
+            # print("hi")
             control_type = cfg["motor_type"]
             if use_delta:
                 control_limits[action_idx, 0] = np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, 0] - np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, 1]

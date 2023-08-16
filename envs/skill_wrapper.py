@@ -69,7 +69,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
             f.create_group("mask")
             data_grp.attrs["env_args"] = json.dumps(self.env_args)
 
-        self.control_limits = get_control_limits(self.env.robot, use_delta=use_delta)
+        self.control_limits = get_control_limits(self.env.robot)
 
         # Run super
         super().__init__(env=env)
@@ -115,7 +115,6 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                 step_data["action"] = normalize_action(action, self.control_limits)
                 step_data["reward"] = reward
                 step_data["done"] = done
-                step_data[""]
 
                 next_obs_processed = process_omni_obs(next_obs, self.obs_modalities)
                 step_data["next_obs"] = next_obs_processed
