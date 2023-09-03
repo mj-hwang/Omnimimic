@@ -34,7 +34,10 @@ def normalize_action(action, control_limits):
     """
     Normalize the action to [-1, 1] based on the control limits.
     """
-    return (action - control_limits[:, 0]) / (control_limits[:, 1] - control_limits[:, 0]) * 2 - 1
+    # return (action - control_limits[:, 0]) / (control_limits[:, 1] - control_limits[:, 0]) * 2 - 1
+    eps = 1e-8
+    return (action - control_limits[:, 0]) / (control_limits[:, 1] - control_limits[:, 0] + eps) * 2 - 1
+
 
 def denormalize_action(action, control_limits):
     """
