@@ -19,15 +19,20 @@ def get_control_limits(robot):
         else:
             use_delta = False
 
-        if len(joint_idx) == len(action_idx): # don't do anything to gripper action
-            # print("hi")
-            control_type = cfg["motor_type"]
-            if use_delta:
-                control_limits[action_idx, 0] = np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, 0] - np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, 1]
-                control_limits[action_idx, 1] = -control_limits[action_idx, 0]
-            else:
-                control_limits[action_idx, :] = np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, :]
-        
+        if cfg["name"] == "JointController":
+            if len(joint_idx) == len(action_idx): # don't do anything to gripper action
+                # print("hi")
+                control_type = cfg["motor_type"]
+                if use_delta:
+                    control_limits[action_idx, 0] = np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, 0] - np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, 1]
+                    control_limits[action_idx, 1] = -control_limits[action_idx, 0]
+                else:
+                    control_limits[action_idx, :] = np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, :]
+        elif cfg["name"] == "InverseKinematicsController":
+            assert cfg["motor_type"] == "velocity", "Controller must be in velocity mode"
+            assert cfg["mode"] == "pose_absolute_ori", "Controller must be in pose_delta_ori mode"
+            control_limits[action_idx, 0] = np.array([-1.0, -1.0, -1.0, -np.pi, -np.pi, -np.pi])
+            control_limits[action_idx, 1] = np.array([1.0, 1.0, 1.0, np.pi, np.pi, np.pi])
     return control_limits
 
 def normalize_action(action, control_limits):
