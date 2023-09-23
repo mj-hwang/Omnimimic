@@ -94,11 +94,17 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
             current_skill_type = None
             current_skill_history = []
             for action, skill_info in skill_generator:
+                # print(f"skill info: {skill_info}")
                 skill_type = skill_info.split(":")[0]
                 if skill_type == "nav":
                     skill_type = skill_name + "_nav"
-                else:
+                elif skill_type == "manip":
                     skill_type = skill_name + "_manip"
+                else:
+                    # Some actions (e.g. _settle_robot) have "idle" type.
+                    # These are considered to be a continuation of the current skill type.
+                    skill_type = current_skill_type
+
                 if skill_type != current_skill_type:
                     if current_skill_type is not None and len(current_skill_history) > 0:
                         self.current_traj_history.append(

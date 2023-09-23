@@ -1,5 +1,4 @@
 from omnigibson.envs.env_wrapper import EnvironmentWrapper
-# from robomimic.envs.env_base import EnvType, EnvBase
 import robomimic.envs.env_base as EB
 from collections import defaultdict
 import json
@@ -25,6 +24,10 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
         env (OmniGibsonEnv): The environment to wrap.
         obs_modalities (list): list of observation modalities to collect
         path (str): path to hdf5 data file
+
+    NOTE: Differences from OmnimimicSkillWrapper:
+    - DOES NOT automatically flush trajectories to datafile with skill change or reset
+    
     """
     def __init__(
         self, 
@@ -53,6 +56,8 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
         self.skill_mask_dict = defaultdict(list)
         self.env_args = self.env.env_args
         self.control_limits = get_control_limits(self.env.robot)
+
+        self.current_skill_type = None
 
         self.current_obs = self.env.reset()
 
@@ -96,6 +101,7 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
                 else:
                     skill_type = skill_name + "_manip"
                 if skill_type != current_skill_type:
+                    print(f"\nskill type changed from {current_skill_type} to {skill_type}\n")
                     if current_skill_type is not None and len(current_skill_history) > 0:
                         self.current_traj_history.append(
                             (current_skill_type, current_skill_history)
@@ -138,9 +144,9 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
                     (current_skill_type, current_skill_history)
                 )
 
-            # if success, flush the trajctory to datafile
+            # check task success
             if self.is_success()["task"]:
-                self.flush_current_traj()
+                # self.flush_current_traj()
                 rollout_success = True
             else:
                 rollout_success = False
@@ -200,6 +206,7 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
         Flush current trajectory data and update mask for skill type
         """
         with h5py.File(self.data_path, 'r+') as f:
+            breakpoint()
             # append current traj history to hdf5 file
             for skill_type, skill_history in self.current_traj_history:
                 traj_grp_name = f"demo_{self.traj_count}"
@@ -218,6 +225,12 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
                 if skill_type in mask_grp:
                     del mask_grp[skill_type]
                 mask_grp.create_dataset(skill_type, data=grps)
+    
+    # def clear_current_traj(self):
+    #     """
+    #     Clears current trajectory history
+    #     """
+    #     self.current_traj_history = []
 
     def save_data(self):
         """
@@ -233,13 +246,22 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
 
         self.hdf5_file.close()
 
-    # for easy access from outside the class
+    def get_current_traj_history(self):
+        return self.current_traj_history
+
+    ########## env_util functions for easy access ##########
     def normalize_action(self, action):
         return normalize_action(action, self.control_limits)
     
     def denormalize_action(self, action):
         return denormalize_action(action, self.control_limits)
 
+    def process_obs(self, obs, postprocess_for_eval=False):
+        return process_omni_obs(obs, self.obs_modalities, postprocess_for_eval=postprocess_for_eval)
+    
+    def process_traj_to_datafile(traj_data, hdf5_file, traj_grp_name):
+        return process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name)
+    
     ########## functions needed for robomimic EnvBase type ##########
     def reset_to(self, state): # TODO?
         print("reset_to not implemented")
