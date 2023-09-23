@@ -98,8 +98,13 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
                 skill_type = skill_info.split(":")[0]
                 if skill_type == "nav":
                     skill_type = skill_name + "_nav"
-                else:
+                elif skill_type == "manip":
                     skill_type = skill_name + "_manip"
+                else:
+                    # Some actions (e.g. _settle_robot) have "idle" type.
+                    # These are considered to be a continuation of the current skill type.
+                    skill_type = current_skill_type
+                    
                 if skill_type != current_skill_type:
                     print(f"\nskill type changed from {current_skill_type} to {skill_type}\n")
                     if current_skill_type is not None and len(current_skill_history) > 0:
