@@ -30,7 +30,12 @@ cd robomimic
 pip install -e .
 ```
 
-
+### Install Omnimimic
+In the root directory, run
+```bash
+pip install .
+```
+And change the `ROOT_DIR` variable in `utils/macros.py` to match the directory Omnimimic is cloned to.
 
 ## Exemplary project
 [**Distilling MOMA**](https://github.com/mj-hwang/distilling-moma/tree/main) project uses this repository
