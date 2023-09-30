@@ -211,7 +211,6 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
         Flush current trajectory data and update mask for skill type
         """
         with h5py.File(self.data_path, 'r+') as f:
-            breakpoint()
             # append current traj history to hdf5 file
             for skill_type, skill_history in self.current_traj_history:
                 traj_grp_name = f"demo_{self.traj_count}"

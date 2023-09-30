@@ -1,0 +1,175 @@
+{
+    "algo_name": "bc",
+    "experiment": {
+        "name": "all_obs_bc_rnn_50",
+        "validate": false,
+        "logging": {
+            "terminal_output_to_txt": true,
+            "log_tb": true,
+            "log_wandb": false,
+            "wandb_proj_name": "debug"
+        },
+        "save": {
+            "enabled": true,
+            "every_n_seconds": null,
+            "every_n_epochs": 50,
+            "epochs": [],
+            "on_best_validation": false,
+            "on_best_rollout_return": false,
+            "on_best_rollout_success_rate": true
+        },
+        "epoch_every_n_steps": 100,
+        "validation_epoch_every_n_steps": 10,
+        "env": null,
+        "additional_envs": null,
+        "render": false,
+        "render_video": true,
+        "keep_all_videos": false,
+        "video_skip": 5,
+        "rollout": {
+            "enabled": false,
+            "n": 50,
+            "horizon": 400,
+            "rate": 50,
+            "warmstart": 0,
+            "terminate_on_success": true
+        }
+    },
+    "train": {
+        "data": null,
+        "output_dir": null,
+        "num_data_workers": 0,
+        "hdf5_cache_mode": "low_dim",
+        "hdf5_use_swmr": true,
+        "hdf5_load_next_obs": false,
+        "hdf5_normalize_obs": false,
+        "hdf5_filter_key": null,
+        "seq_length": 5,
+        "pad_seq_length": true,
+        "frame_stack": 5,
+        "pad_frame_stack": true,
+        "dataset_keys": [
+            "actions"
+        ],
+        "goal_mode": null,
+        "cuda": true,
+        "batch_size": 4,
+        "num_epochs": 300,
+        "seed": 1
+    },
+    "algo": {
+        "optim_params": {
+            "policy": {
+                "optimizer_type": "adamw",
+                "learning_rate": {
+                    "initial": 0.0001,
+                    "decay_factor": 0.1,
+                    "epoch_schedule": [100],
+                    "scheduler_type": "linear"
+                },
+                "regularization": {
+                    "L2": 0.01
+                }
+            }
+        },
+        "loss": {
+            "l2_weight": 1.0,
+            "l1_weight": 0.0,
+            "cos_weight": 0.0
+        },
+        "actor_layer_dims": [256, 256],
+        "gaussian": {
+            "enabled": false
+        },
+        "gmm": {
+            "enabled": false
+        },
+        "vae": {
+            "enabled": false
+        },
+        "rnn": {
+            "enabled": true,
+            "horizon": 50,
+            "hidden_dim": 256,
+            "rnn_type": "LSTM",
+            "num_layers": 1
+        },
+        "transformer": {
+            "enabled": false
+        }
+    },
+    "observation": {
+        "modalities": {
+            "obs": {
+                "low_dim": [
+                    "proprio"
+                ],
+                "rgb": [
+                    "rgb",
+                    "rgb_wrist"
+                ],
+                "depth": [
+                    "depth",
+                    "depth_wrist"
+                ],
+                "scan": [
+                    "scan"
+                ]
+            },
+            "goal": {
+                "low_dim": [],
+                "rgb": [],
+                "depth": [],
+                "scan": []
+            }
+        },
+        "encoder": {
+            "low_dim": {
+                "core_class": null,
+                "core_kwargs": {},
+                "obs_randomizer_class": null,
+                "obs_randomizer_kwargs": {}
+            },
+            "rgb": {
+                "core_class": "VisualCore",
+                "core_kwargs": {
+                    "input_shape": [3, 128, 128],
+                    "backbone_class": "ResNet18Conv",
+                    "backbone_kwargs": {
+                        "pretrained": false,
+                        "input_coord_conv": false
+                    }
+                },
+                "obs_randomizer_class": null,
+                "obs_randomizer_kwargs": {}
+            },
+            "depth": {
+                "core_class": "VisualCore",
+                "core_kwargs": {
+                    "input_shape": [1, 128, 128],
+                    "backbone_class": "ResNet18Conv",
+                    "backbone_kwargs": {
+                        "pretrained": false,
+                        "input_coord_conv": false
+                    }
+                },
+                "obs_randomizer_class": null,
+                "obs_randomizer_kwargs": {}
+            },
+            "scan": {
+                "core_class": "ScanCore",
+                "core_kwargs": {
+                    "input_shape": [3, 128, 128],
+                    "conv_activation": "relu",
+                    "conv_kwargs": {
+                        "out_channels" : [32, 64, 64],
+                        "kernel_size": [8, 4, 2],
+                        "stride": [4, 2, 1]
+                    }
+                },
+                "obs_randomizer_class": null,
+                "obs_randomizer_kwargs": {}
+            }
+        }
+    }
+}
