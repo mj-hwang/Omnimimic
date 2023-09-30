@@ -31,8 +31,9 @@ pip install -e .
 ```
 
 ### Install Omnimimic
-In the root directory, run
 ```bash
+git clone https://github.com/mj-hwang/Omnimimic.git
+cd Omnimimic
 pip install .
 ```
 And change the `ROOT_DIR` variable in `utils/macros.py` to match the directory Omnimimic is cloned to.
