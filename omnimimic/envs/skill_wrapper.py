@@ -199,14 +199,15 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                 traj_grp_name = f"demo_{self.traj_count}"
                 process_traj_to_hdf5(skill_history, f, traj_grp_name)
                 self.skill_mask_dict[skill_type].append(traj_grp_name)
-                
-                self.traj_count += 1
+
                 self.step_count += len(skill_history)
 
                 if "nav" in skill_type:
                     self.navigation_traj_count += 1
                 else:
                     self.manipulation_traj_count += 1
+
+            self.traj_count += 1
             self.current_traj_history = []
 
             # update total step and skill mask in hdf5 file
