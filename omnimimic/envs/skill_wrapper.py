@@ -130,6 +130,9 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                 self.current_obs = next_obs
                 current_obs_processed = next_obs_processed
 
+                if done:
+                    break    
+
             if len(current_skill_history) > 0:
                 self.current_traj_history.append(
                     (current_skill_type, current_skill_history)
@@ -169,9 +172,14 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         if self.collect_if_success_at_the_end:
             if self.env.is_success():
                 self.flush_current_traj()
+            else:
+                self.current_traj_history = []
+
         elif self.collect_if_success_at_least_once:
             if self.ever_succeededed:
                 self.flush_current_traj()
+            else:
+                self.current_traj_history = []
         else:
             print("flushing")
             self.flush_current_traj()
@@ -195,6 +203,9 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         """
         with h5py.File(self.data_path, 'r+') as f:
             # append current traj history to hdf5 file
+            print(f"\n\n{len(self.current_traj_history)} trajctories will be flushed")
+            # if not (len(self.current_traj_history) == 3):
+            #     breakpoint()
             for skill_type, skill_history in self.current_traj_history:
                 traj_grp_name = f"demo_{self.traj_count}"
                 process_traj_to_hdf5(skill_history, f, traj_grp_name)
