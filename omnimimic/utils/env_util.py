@@ -34,7 +34,17 @@ def process_omni_obs(obs, obs_modalities, postprocess_for_eval=False):
             mod_data = obs["robot0"]["robot0:wrist_camera_frame_Camera_sensor_depth"]
             mod_data = mod_data[:, :, np.newaxis]
             if postprocess_for_eval:
-                mod_data = process_obs(mod_data, obs_modality="depth") 
+                mod_data = process_obs(mod_data, obs_modality="depth")
+        elif mod == "rgb_external":
+            mod_data = obs["external"]["rgb"]
+            mod_data = mod_data[:, :, :3]
+            if postprocess_for_eval:
+                mod_data = process_obs(mod_data, obs_modality="rgb")
+        elif mod == "depth_external":
+            mod_data = obs["external"]["depth"]
+            mod_data = mod_data[:, :, np.newaxis]
+            if postprocess_for_eval:
+                mod_data = process_obs(mod_data, obs_modality="depth")
         elif mod == "proprio":
             mod_data = obs["robot0"]["proprio"]
         else:
