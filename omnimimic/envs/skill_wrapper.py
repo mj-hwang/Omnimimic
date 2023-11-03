@@ -113,12 +113,14 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                     current_skill_type = skill_type
                     current_skill_history = []
 
+                step_data = {}
+                step_data["action"] = normalize_action(action.copy(), self.control_limits)
+
                 next_obs, reward, done, info = self.env.step(action)
                 # self.step_count += 1
 
-                step_data = {}
+                
                 step_data["obs"] = current_obs_processed
-                step_data["action"] = normalize_action(action, self.control_limits)
                 step_data["reward"] = reward
                 step_data["done"] = done
 

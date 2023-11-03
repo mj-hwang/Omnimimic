@@ -48,4 +48,5 @@ def denormalize_action(action, control_limits):
     """
     Denormalize the action from [-1, 1] to the control limits.
     """
-    return (action + 1) / 2 * (control_limits[:, 1] - control_limits[:, 0]) + control_limits[:, 0]
+    eps = 1e-8
+    return (action + 1) / 2 * (control_limits[:, 1] - control_limits[:, 0] + eps) + control_limits[:, 0]

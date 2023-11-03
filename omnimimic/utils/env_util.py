@@ -3,6 +3,9 @@ import numpy as np
 
 from robomimic.utils.obs_utils import process_obs
 
+from PIL import Image
+import time
+
 def process_omni_obs(obs, obs_modalities, postprocess_for_eval=False):
     step_obs_data = {}
     for mod in obs_modalities:
@@ -14,39 +17,41 @@ def process_omni_obs(obs, obs_modalities, postprocess_for_eval=False):
                     obs["robot0"]["robot0:base_front_laser_link_Lidar_sensor_scan"],
                     obs["robot0"]["robot0:base_rear_laser_link_Lidar_sensor_scan"]
                 ])
-            mod_data = mod_data.T
+            mod_data = mod_data.T.copy()
         elif mod == "rgb":
             mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_rgb"]
-            mod_data = mod_data[:, :, :3]
+            mod_data = mod_data[:, :, :3].copy()
             if postprocess_for_eval:
                 mod_data = process_obs(mod_data, obs_modality="rgb")      
         elif mod == "depth":
             mod_data = obs["robot0"]["robot0:eyes_Camera_sensor_depth"]
-            mod_data = mod_data[:, :, np.newaxis]
+            mod_data = mod_data[:, :, np.newaxis].copy()
             if postprocess_for_eval:
                 mod_data = process_obs(mod_data, obs_modality="depth") 
         elif mod == "rgb_wrist":
             mod_data = obs["robot0"]["robot0:wrist_camera_frame_Camera_sensor_rgb"]
-            mod_data = mod_data[:, :, :3]
+            mod_data = mod_data[:, :, :3].copy()
             if postprocess_for_eval:
                 mod_data = process_obs(mod_data, obs_modality="rgb")
         elif mod == "depth_wrist":
             mod_data = obs["robot0"]["robot0:wrist_camera_frame_Camera_sensor_depth"]
-            mod_data = mod_data[:, :, np.newaxis]
+            mod_data = mod_data[:, :, np.newaxis].copy()
             if postprocess_for_eval:
                 mod_data = process_obs(mod_data, obs_modality="depth")
         elif mod == "rgb_external":
             mod_data = obs["external"]["rgb"]
-            mod_data = mod_data[:, :, :3]
+            mod_data = mod_data[:, :, :3].copy()
+            # debug_img = Image.fromarray(mod_data)
+            # debug_img.save(f"debug/debug_{time.time()}.png")
             if postprocess_for_eval:
                 mod_data = process_obs(mod_data, obs_modality="rgb")
         elif mod == "depth_external":
-            mod_data = obs["external"]["depth"]
+            mod_data = obs["external"]["depth"].copy()
             mod_data = mod_data[:, :, np.newaxis]
             if postprocess_for_eval:
                 mod_data = process_obs(mod_data, obs_modality="depth")
         elif mod == "proprio":
-            mod_data = obs["robot0"]["proprio"]
+            mod_data = obs["robot0"]["proprio"].copy()
         else:
             raise KeyError(f"{mod} is an invalid or unsupported modality for this robot.")
         step_obs_data[mod] = mod_data
@@ -79,6 +84,8 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
         actions.append(step_data["action"])
         rewards.append(step_data["reward"])
         dones.append(step_data["done"])
+
+    # np.save(f"IK_test/hdf5_action_{time.time()}.npy", np.stack(actions, axis=0))
 
     obs_grp = traj_grp.create_group("obs")
     for mod, traj_mod_data in obss.items():
