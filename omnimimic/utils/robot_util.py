@@ -30,9 +30,13 @@ def get_control_limits(robot):
                     control_limits[action_idx, :] = np.stack(cfg["control_limits"][control_type], axis=1)[joint_idx, :]
         elif cfg["name"] == "InverseKinematicsController":
             assert cfg["motor_type"] == "velocity", "Controller must be in velocity mode"
-            assert cfg["mode"] == "pose_absolute_ori", "Controller must be in pose_delta_ori mode"
-            control_limits[action_idx, 0] = np.array([-1.0, -1.0, -1.0, -np.pi, -np.pi, -np.pi])
-            control_limits[action_idx, 1] = np.array([1.0, 1.0, 1.0, np.pi, np.pi, np.pi])
+            # assert cfg["mode"] == "pose_absolute_ori", "Controller must be in pose_delta_ori mode"
+            if cfg["mode"] == "pose_absolute_ori":
+                control_limits[action_idx, 0] = np.array([-1.0, -1.0, -1.0, -np.pi, -np.pi, -np.pi])
+                control_limits[action_idx, 1] = np.array([1.0, 1.0, 1.0, np.pi, np.pi, np.pi])
+            elif cfg["mode"] == "pose_delta_ori":
+                control_limits[action_idx, 0] = -1 * np.ones(6)
+                control_limits[action_idx, 1] = np.ones(6)
     return control_limits
 
 def normalize_action(action, control_limits):
