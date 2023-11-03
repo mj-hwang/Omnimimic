@@ -88,6 +88,7 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
 
         total_reward = 0.
         success = { k: False for k in self.is_success() } # success metrics
+        skill_success = True
 
         try:
             current_obs_processed = process_omni_obs(self.current_obs, self.obs_modalities)
@@ -106,7 +107,7 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
                     skill_type = current_skill_type
                     
                 if skill_type != current_skill_type:
-                    print(f"\nskill type changed from {current_skill_type} to {skill_type}\n")
+                    # print(f"\nskill type changed from {current_skill_type} to {skill_type}\n")
                     if current_skill_type is not None and len(current_skill_history) > 0:
                         self.current_traj_history.append(
                             (current_skill_type, current_skill_history)
@@ -149,23 +150,24 @@ class OmnimimicSkillRolloutWrapper(EB.EnvBase):
                     (current_skill_type, current_skill_history)
                 )
 
-            # check task success
-            if self.is_success()["task"]:
-                # self.flush_current_traj()
-                rollout_success = True
-            else:
-                rollout_success = False
+            # # check task success
+            # if self.is_success()["task"]:
+            #     # self.flush_current_traj()
+            #     rollout_success = True
+            # else:
+            #     rollout_success = False
 
         except ActionPrimitiveError as err:
             print("skill execution failed", err)
-            rollout_success = False
-
+            # rollout_success = False
+            skill_success = False
 
         results["Return"] = total_reward
         results["Horizon"] = n_steps + 1
         results["SuccessRate"] = float(success["task"])
 
-        return results, rollout_success
+        # return results, rollout_success
+        return results, skill_success
 
     def step(self, action):
         """
