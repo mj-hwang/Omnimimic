@@ -26,6 +26,8 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         collect_partial (bool): whether to collect partial trajectories when it errors or fails before completion
         collect_if_success_at_least_once (bool): whether to collect a trajectory if it succeeds at least once after skill
         collect_if_success_at_the_end (bool): whether to collect a trajectory if it succeeds at the end
+        save_per_skill (bool): If True, each skill executed via execute_skill is saved as a separate trajectory.
+            If false, the entire task demonstration is saved as a single trajectory once the task succeeds.
     """
     def __init__(
         self, 
@@ -36,6 +38,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         collect_if_success_at_least_once=True,
         collect_if_success_at_the_end=False,
         use_delta=True,
+        save_per_skill=False, 
     ):
         self.env = env
         self.obs_modalities = obs_modalities
@@ -52,7 +55,9 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         
         self.current_obs = None
         self.current_traj_history = []
+        self.current_skill_history = [] 
         self.ever_succeededed = False
+        self.save_per_skill = save_per_skill
 
         self.skill_mask_dict = defaultdict(list)
         # TODO: update env kwargs
@@ -75,7 +80,79 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         super().__init__(env=env)
         self.reset()
 
-    def execute_skill(self, skill_generator, skill_name):
+    # def execute_skill(self, skill_generator, skill_name):
+    #     """
+    #     Execute the skill given the skill controller.
+    #     If planning or execution fails, trajectory is discarded.
+
+    #     Note: skill_type can be different from skill_name.
+    #     Most manipulation skills in OmniGibson have two phases: navigation and manipulation,
+    #     and we indicate the skill type by appending "_nav" or "_manip" to the skill name.
+
+    #     Args:
+    #         skill_generator (Generator): a generator of action to execute the skill
+    #         skill_name (str): name of the skill
+    #     """
+    #     try:
+    #         current_obs_processed = process_omni_obs(self.current_obs, self.obs_modalities)
+
+    #         current_skill_type = None
+    #         self.current_skill_history = []
+    #         for action, skill_info in skill_generator:
+    #             # print(f"skill info: {skill_info}")
+    #             skill_type = skill_info.split(":")[0]
+    #             if skill_type == "nav":
+    #                 skill_type = skill_name + "_nav"
+    #             elif skill_type == "manip":
+    #                 skill_type = skill_name + "_manip"
+    #             else:
+    #                 # Some actions (e.g. _settle_robot) have "idle" type.
+    #                 # These are considered to be a continuation of the current skill type.
+    #                 skill_type = current_skill_type
+
+    #             if skill_type != current_skill_type:
+    #                 if current_skill_type is not None and len(self.current_skill_history) > 0:
+    #                     self.current_traj_history.append(
+    #                         (current_skill_type, self.current_skill_history)
+    #                     )
+    #                 current_skill_type = skill_type
+    #                 self.current_skill_history = []
+
+    #             step_data = {}
+    #             step_data["action"] = normalize_action(action.copy(), self.control_limits)
+
+    #             next_obs, reward, done, info = self.env.step(action)
+    #             # self.step_count += 1
+
+                
+    #             step_data["obs"] = current_obs_processed
+    #             step_data["reward"] = reward
+    #             step_data["done"] = done
+
+    #             next_obs_processed = process_omni_obs(next_obs, self.obs_modalities)
+    #             step_data["next_obs"] = next_obs_processed
+
+    #             self.current_skill_history.append(step_data)
+
+    #             self.current_obs = next_obs
+    #             current_obs_processed = next_obs_processed
+
+    #             if done:
+    #                 break    
+
+    #         if len(self.current_skill_history) > 0:
+    #             self.current_traj_history.append(
+    #                 (current_skill_type, self.current_skill_history)
+    #             )
+
+    #         if self.env.is_success():
+    #             self.ever_succeededed = True
+    #     except ActionPrimitiveError as err:
+    #         print("skill execution failed", err)
+    #         if not self.collect_partial:
+    #             self.current_traj_history = []
+
+    def execute_skill(self, skill_generator, skill_name=None):
         """
         Execute the skill given the skill controller.
         If planning or execution fails, trajectory is discarded.
@@ -88,37 +165,41 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
             skill_generator (Generator): a generator of action to execute the skill
             skill_name (str): name of the skill
         """
+        if self.save_per_skill:
+            assert skill_name is not None, "Skill name must be provided to save per-skill trajectories"
         try:
+            print("[1] current_skill_history len", len(self.current_skill_history))
             current_obs_processed = process_omni_obs(self.current_obs, self.obs_modalities)
 
             current_skill_type = None
-            current_skill_history = []
+            # self.current_skill_history = []
             for action, skill_info in skill_generator:
-                # print(f"skill info: {skill_info}")
-                skill_type = skill_info.split(":")[0]
-                if skill_type == "nav":
-                    skill_type = skill_name + "_nav"
-                elif skill_type == "manip":
-                    skill_type = skill_name + "_manip"
-                else:
-                    # Some actions (e.g. _settle_robot) have "idle" type.
-                    # These are considered to be a continuation of the current skill type.
-                    skill_type = current_skill_type
 
-                if skill_type != current_skill_type:
-                    if current_skill_type is not None and len(current_skill_history) > 0:
-                        self.current_traj_history.append(
-                            (current_skill_type, current_skill_history)
-                        )
-                    current_skill_type = skill_type
-                    current_skill_history = []
+                # if saving per skill trajectories, keep track of skill info 
+                if self.save_per_skill:
+                    skill_type = skill_info.split(":")[0]
+                    if skill_type == "nav":
+                        skill_type = skill_name + "_nav"
+                    elif skill_type == "manip":
+                        skill_type = skill_name + "_manip"
+                    else:
+                        # Some actions (e.g. _settle_robot) have "idle" type.
+                        # These are considered to be a continuation of the current skill type.
+                        skill_type = current_skill_type
 
+                    if skill_type != current_skill_type:
+                        if current_skill_type is not None and len(self.current_skill_history) > 0:
+                            self.current_traj_history.append(
+                                (current_skill_type, self.current_skill_history)
+                            )
+                        current_skill_type = skill_type
+                        self.current_skill_history = []
+
+                # record step data
                 step_data = {}
                 step_data["action"] = normalize_action(action.copy(), self.control_limits)
 
                 next_obs, reward, done, info = self.env.step(action)
-                # self.step_count += 1
-
                 
                 step_data["obs"] = current_obs_processed
                 step_data["reward"] = reward
@@ -127,25 +208,37 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                 next_obs_processed = process_omni_obs(next_obs, self.obs_modalities)
                 step_data["next_obs"] = next_obs_processed
 
-                current_skill_history.append(step_data)
+                self.current_skill_history.append(step_data)
 
                 self.current_obs = next_obs
                 current_obs_processed = next_obs_processed
 
                 if done:
-                    break    
-
-            if len(current_skill_history) > 0:
-                self.current_traj_history.append(
-                    (current_skill_type, current_skill_history)
-                )
+                    break  
+            # print("[2] current_skill_history len", len(self.current_skill_history))
+            if self.save_per_skill:
+                if len(self.current_skill_history) > 0:
+                    self.current_traj_history.append(
+                        (current_skill_type, self.current_skill_history)
+                    )
+                    self.current_skill_history = []
 
             if self.env.is_success():
+                if not self.save_per_skill:
+                    self.current_traj_history.append(
+                        (current_skill_type, self.current_skill_history)
+                    )
+                    self.current_skill_history = []
                 self.ever_succeededed = True
+            # print("[3]current_skill_history len", len(self.current_skill_history))
+            # print("current traj history len", len(self.current_traj_history)) 
+            # breakpoint()
         except ActionPrimitiveError as err:
             print("skill execution failed", err)
             if not self.collect_partial:
                 self.current_traj_history = []
+                self.current_skill_history = []
+
 
     def step(self, action):
         """
@@ -171,20 +264,21 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
         Returns:
             dict: Environment observation space after reset occurs
         """
-        if self.collect_if_success_at_the_end:
-            if self.env.is_success():
-                self.flush_current_traj()
-            else:
-                self.current_traj_history = []
+        if len(self.current_traj_history) > 0:
+            if self.collect_if_success_at_the_end:
+                if self.env.is_success():
+                    self.flush_current_traj()
+                else:
+                    self.current_traj_history = []
 
-        elif self.collect_if_success_at_least_once:
-            if self.ever_succeededed:
-                self.flush_current_traj()
+            elif self.collect_if_success_at_least_once:
+                if self.ever_succeededed:
+                    self.flush_current_traj()
+                else:
+                    self.current_traj_history = []
             else:
-                self.current_traj_history = []
-        else:
-            print("flushing")
-            self.flush_current_traj()
+                print("flushing")
+                self.flush_current_traj()
 
         self.current_obs = self.env.reset()
         self.ever_succeededed = False
@@ -211,26 +305,29 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
             for skill_type, skill_history in self.current_traj_history:
                 traj_grp_name = f"demo_{self.traj_count}"
                 process_traj_to_hdf5(skill_history, f, traj_grp_name)
-                self.skill_mask_dict[skill_type].append(traj_grp_name)
+                if self.save_per_skill:
+                    self.skill_mask_dict[skill_type].append(traj_grp_name)
+                    if "nav" in skill_type:
+                        self.navigation_traj_count += 1
+                    else:
+                        self.manipulation_traj_count += 1
 
                 self.traj_count += 1
                 self.step_count += len(skill_history)
 
-                if "nav" in skill_type:
-                    self.navigation_traj_count += 1
-                else:
-                    self.manipulation_traj_count += 1
-
             self.env_traj_count += 1
             self.current_traj_history = []
+            self.current_skill_history = []
 
             # update total step and skill mask in hdf5 file
             f.require_group("data").attrs["total"] = self.step_count
-            for skill_type, grps in self.skill_mask_dict.items():
-                mask_grp = f.require_group("mask")
-                if skill_type in mask_grp:
-                    del mask_grp[skill_type]
-                mask_grp.create_dataset(skill_type, data=grps)
+            
+            if self.save_per_skill:
+                for skill_type, grps in self.skill_mask_dict.items():
+                    mask_grp = f.require_group("mask")
+                    if skill_type in mask_grp:
+                        del mask_grp[skill_type]
+                    mask_grp.create_dataset(skill_type, data=grps)
 
     def save_data(self):
         """
