@@ -125,7 +125,7 @@ class OmnimimicSkillWrapper(EnvironmentWrapper):
                 step_data["done"] = done
 
                 next_obs_processed = process_omni_obs(next_obs, self.obs_modalities)
-                step_data["next_obs"] = next_obs_processed
+                # step_data["next_obs"] = next_obs_processed
 
                 current_skill_history.append(step_data)
 

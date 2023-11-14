@@ -3,8 +3,8 @@ import numpy as np
 
 from robomimic.utils.obs_utils import process_obs
 
-from PIL import Image
-import time
+# from PIL import Image
+# import time
 
 def process_omni_obs(obs, obs_modalities, postprocess_for_eval=False):
     step_obs_data = {}
@@ -79,8 +79,8 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
     for step_data in traj_data:
         for mod, step_mod_data in step_data["obs"].items():
             obss[mod].append(step_mod_data)
-        for mod, step_mod_data in step_data["next_obs"].items():
-            next_obss[mod].append(step_mod_data)
+        # for mod, step_mod_data in step_data["next_obs"].items():
+        #     next_obss[mod].append(step_mod_data)
         actions.append(step_data["action"])
         rewards.append(step_data["reward"])
         dones.append(step_data["done"])
@@ -90,9 +90,9 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
     obs_grp = traj_grp.create_group("obs")
     for mod, traj_mod_data in obss.items():
         obs_grp.create_dataset(mod, data=np.stack(traj_mod_data, axis=0))
-    next_obs_grp = traj_grp.create_group("next_obs")
-    for mod, traj_mod_data in next_obss.items():
-        next_obs_grp.create_dataset(mod, data=np.stack(traj_mod_data, axis=0))
+    # next_obs_grp = traj_grp.create_group("next_obs")
+    # for mod, traj_mod_data in next_obss.items():
+    #     next_obs_grp.create_dataset(mod, data=np.stack(traj_mod_data, axis=0))
     traj_grp.create_dataset("actions", data=np.stack(actions, axis=0))
     traj_grp.create_dataset("rewards", data=np.stack(rewards, axis=0))
     traj_grp.create_dataset("dones", data=np.stack(dones, axis=0))

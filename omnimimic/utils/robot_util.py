@@ -32,11 +32,11 @@ def get_control_limits(robot):
             assert cfg["motor_type"] == "velocity", "Controller must be in velocity mode"
             # assert cfg["mode"] == "pose_absolute_ori", "Controller must be in pose_delta_ori mode"
             if cfg["mode"] == "pose_absolute_ori":
-                control_limits[action_idx, 0] = np.array([-1.0, -1.0, -1.0, -np.pi, -np.pi, -np.pi])
-                control_limits[action_idx, 1] = np.array([1.0, 1.0, 1.0, np.pi, np.pi, np.pi])
+                control_limits[action_idx, 0] = np.array([-0.4, -0.4, -0.7, -np.pi, -np.pi, -np.pi])
+                control_limits[action_idx, 1] = np.array([0.4, 0.4, 0.7, np.pi, np.pi, np.pi])
             elif cfg["mode"] == "pose_delta_ori":
-                control_limits[action_idx, 0] = -1 * np.ones(6)
-                control_limits[action_idx, 1] = np.ones(6)
+                control_limits[action_idx, 0] = np.array([-0.4, -0.4, -0.7, -np.pi, -np.pi, -np.pi])
+                control_limits[action_idx, 1] = np.array([0.4, 0.4, 0.7, np.pi, np.pi, np.pi])
     return control_limits
 
 def normalize_action(action, control_limits):
