@@ -65,7 +65,7 @@ def get_skill_type(env, action, skill_type):
     else:
         return skill_type + "_nav"
 
-def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
+def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name, save_next_obs=False):
     data_grp = hdf5_file.require_group("data")
     traj_grp = data_grp.create_group(traj_grp_name)
     traj_grp.attrs["num_samples"] = len(traj_data)
@@ -79,8 +79,9 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
     for step_data in traj_data:
         for mod, step_mod_data in step_data["obs"].items():
             obss[mod].append(step_mod_data)
-        # for mod, step_mod_data in step_data["next_obs"].items():
-        #     next_obss[mod].append(step_mod_data)
+        if save_next_obs:
+            for mod, step_mod_data in step_data["next_obs"].items():
+                next_obss[mod].append(step_mod_data)
         actions.append(step_data["action"])
         rewards.append(step_data["reward"])
         dones.append(step_data["done"])
@@ -90,9 +91,10 @@ def process_traj_to_hdf5(traj_data, hdf5_file, traj_grp_name):
     obs_grp = traj_grp.create_group("obs")
     for mod, traj_mod_data in obss.items():
         obs_grp.create_dataset(mod, data=np.stack(traj_mod_data, axis=0))
-    # next_obs_grp = traj_grp.create_group("next_obs")
-    # for mod, traj_mod_data in next_obss.items():
-    #     next_obs_grp.create_dataset(mod, data=np.stack(traj_mod_data, axis=0))
+    if save_next_obs:
+        next_obs_grp = traj_grp.create_group("next_obs")
+        for mod, traj_mod_data in next_obss.items():
+            next_obs_grp.create_dataset(mod, data=np.stack(traj_mod_data, axis=0))
     traj_grp.create_dataset("actions", data=np.stack(actions, axis=0))
     traj_grp.create_dataset("rewards", data=np.stack(rewards, axis=0))
     traj_grp.create_dataset("dones", data=np.stack(dones, axis=0))
